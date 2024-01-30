@@ -1,11 +1,11 @@
-# Side Channel Attacks on RSA
+# Attaque Side Channel sur RSA
 
 ## Attaque temporelle
 
 Pour lancer l'attaque, transférez les fichiers contenus dans le dossier nommé **RSA-Timing-Attack** sur votre carte cible (assurez-vous que votre carte cible peut exécuter des scripts Python3), et lancez le script désiré parmi :
-Attaque sur un algorithme de cryptage RSA utilisant une exponentiation rapide : **timing_attack_square_and_multiply.py**
-Attaque sur un algorithme de cryptage RSA utilisant l'algorithme de Montgomery : **timing_attack_montgomery.py**
-Attaque sur un algorithme de cryptage RSA utilisant le théorème des restes chinois : **timing_attack_CRT.py**
+- Attaque sur un algorithme de cryptage RSA utilisant une exponentiation rapide : **timing_attack_square_and_multiply.py**
+- Attaque sur un algorithme de cryptage RSA utilisant l'algorithme de Montgomery : **timing_attack_montgomery.py**
+- Attaque sur un algorithme de cryptage RSA utilisant le théorème des restes chinois : **timing_attack_CRT.py**
 
 ## Attaque EM
 
