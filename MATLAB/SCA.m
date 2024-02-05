@@ -1,27 +1,27 @@
 %%%%%%%%%%%%%%%%%%%%%%%%% Paramètres modifiables %%%%%%%%%%%%%%%%%%%%%%%%%%
 keylength = 32;
 
-start = 1;
-stop = 3000;
-algo = 'square_and_multiply';
+start = 0;
+stop = 4000;
+algo = 'montgomery';
 threshold = 0.5;
 
-moy_noise = 100;
-data_noise = load(['D:\\PFE\\Code\\MATLAB\\noise\\noise_mean_' ...
-    num2str(moy_noise) '.mat']);
+% % moy_noise = 100;
+% % data_noise = load(['D:\\PFE\\Code\\MATLAB\\noise\\noise_mean_' ...
+% %     num2str(moy_noise) '.mat']);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Appel des fonctions %%%%%%%%%%%%%%%%%%%%%%%%%%%
-data_filtered = filter(start, stop, data_noise, algo, threshold);
-display_bits(data_filtered, keylength)
+data_filtered = filter(start, stop, algo, threshold);
+display_bits(start, stop, data_filtered, keylength)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Fonctions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function data_filtered = filter(start, stop, data_noise, algo, threshold)
+function data_filtered = filter(start, stop, algo, threshold)
     % Initialiser mag_sup
     mag_sup = [];
 
@@ -44,29 +44,29 @@ function data_filtered = filter(start, stop, data_noise, algo, threshold)
         fclose(fid);
 
         % Calculer l'amplitude (magnitude)
-        mag = abs(data);
+        mag_temp = abs(data);
 
-        % Créer un vecteur de temps
-        Fs = 3.2e6; % Fréquence d'échantillonnage
-        dt = 1/Fs; % Intervalle de temps
-        t = 0:dt:(length(mag)*dt)-dt; % Vecteur de temps
+        % % % Créer un vecteur de temps
+        % % Fs = 3.2e6; % Fréquence d'échantillonnage
+        % % dt = 1/Fs; % Intervalle de temps
+        % % t = 0:dt:(length(mag)*dt)-dt; % Vecteur de temps
 
-        % Tronquer data_noise.avg_mag à la taille de mag
-        % Bien qu'il y ait un trigger, les fichiers ne sont pas parfaitement égaux en taille
-        if data_noise.t(end) > t(end)
-            data_noise.avg_mag = data_noise.avg_mag(1:length(mag));
-            data_noise.t = data_noise.t(1:length(t));
-        else
-            mag = mag(1:length(data_noise.avg_mag));
-            t = t(1:length(data_noise.t));
-        end
-
-        % Afficher uniquement les points de mag qui sont supérieurs à data_noise.avg_mag
-        mag_temp = mag;
-        mag_temp(mag <= data_noise.avg_mag) = NaN; % Remplacer les points inférieurs ou égaux par NaN
-
-        % Normaliser l'amplitude
-        mag_temp = (mag_temp - min(mag_temp)) / (max(mag_temp) - min(mag_temp));
+        % % % Tronquer data_noise.avg_mag à la taille de mag
+        % % % Bien qu'il y ait un trigger, les fichiers ne sont pas parfaitement égaux en taille
+        % % if data_noise.t(end) > t(end)
+        % %     data_noise.avg_mag = data_noise.avg_mag(1:length(mag));
+        % %     data_noise.t = data_noise.t(1:length(t));
+        % % else
+        % %     mag = mag(1:length(data_noise.avg_mag));
+        % %     t = t(1:length(data_noise.t));
+        % % end
+        % % 
+        % % % Afficher uniquement les points de mag qui sont supérieurs à data_noise.avg_mag
+        % % mag_temp = mag;
+        % % mag_temp(mag <= data_noise.avg_mag) = NaN; % Remplacer les points inférieurs ou égaux par NaN
+        % % 
+        % % % Normaliser l'amplitude
+        % % mag_temp = (mag_temp - min(mag_temp)) / (max(mag_temp) - min(mag_temp));
 
         % Ajouter à mag_sup
         if isempty(mag_sup)
@@ -118,27 +118,40 @@ function data_filtered = filter(start, stop, data_noise, algo, threshold)
     data_filtered.mag = mag_final;
 end
 
-function display_bits(data, keylength)
-    % Récupérer les données
-    t = data.t;
-    mag = data.mag;
-
+function display_bits(start, stop, data, keylength)
     % Créer une nouvelle figure
     figure;
 
+    % Créer un bouton à cocher
+    h = uicontrol('Style', 'checkbox', 'String', 'Afficher les bits', ...
+                  'Position', [20 20 200 20], 'Callback', @update_graph);
+
     % Afficher l'amplitude normalisée du signal
-    plot(t, mag);
+    plot(data.t, data.mag);
     xlabel('Temps (s)');
-    ylabel('Amplitude normalisée');
-    title('Données séparées par bit');
-    
-    % Calculer l'intervalle de temps pour diviser t(end)
-    interval = t(end) / keylength;
-    
-    % Tracer une ligne verticale rouge à chaque intervalle
-    for x = 0:interval:t(end)
-        y = ylim;
-        line([x x], y, 'Color', 'r');
+    ylabel('Amplitude');
+    title(['Données filtrées (' num2str(stop-start) ' fichiers)']);
+
+    % Stocker les handles des lignes rouges
+    redlines = [];
+
+    function update_graph(source, ~)
+        % Callback pour le bouton à cocher
+        if source.Value == 1
+            % Si le bouton est coché, ajouter les lignes rouges
+            hold on;
+            % Calculer l'intervalle de temps pour diviser t(end)
+            interval = data.t(end) / keylength;
+            for i = 0:interval:max(data_mag.t)
+                redlines(end+1) = line([i i], ylim, 'Color', 'r');
+            end
+            hold off;
+        else
+            % Si le bouton n'est pas coché, supprimer les lignes rouges et rafraîchir le graphique
+            delete(redlines);
+            redlines = [];
+            refreshdata;
+        end
     end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
